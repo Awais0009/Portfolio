@@ -1,6 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { Menu } from "lucide-react";
 import { navSections } from "@/data/navigation";
 import { profile } from "@/data/profile";
@@ -13,12 +15,14 @@ import {
   SheetTrigger,
 } from "@/components/ui/sheet";
 import { CommandPalette } from "@/components/shared/command-palette";
+import { useExplorationState } from "@/components/shared/exploration-provider";
 import { cn } from "@/lib/utils";
 
 export function Navbar() {
   const [scrolled, setScrolled] = useState(false);
-  const [active, setActive] = useState("hero");
   const [sheetOpen, setSheetOpen] = useState(false);
+  const pathname = usePathname();
+  const { visited, total } = useExplorationState();
 
   useEffect(() => {
     function onScroll() {
@@ -28,27 +32,6 @@ export function Navbar() {
     window.addEventListener("scroll", onScroll, { passive: true });
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
-
-  useEffect(() => {
-    const observer = new IntersectionObserver(
-      (entries) => {
-        entries.forEach((entry) => {
-          if (entry.isIntersecting) setActive(entry.target.id);
-        });
-      },
-      { rootMargin: "-40% 0px -50% 0px", threshold: 0 }
-    );
-    navSections.forEach((s) => {
-      const el = document.getElementById(s.id);
-      if (el) observer.observe(el);
-    });
-    return () => observer.disconnect();
-  }, []);
-
-  function goTo(id: string) {
-    setSheetOpen(false);
-    document.getElementById(id)?.scrollIntoView({ behavior: "smooth" });
-  }
 
   return (
     <header
@@ -60,41 +43,52 @@ export function Navbar() {
       )}
     >
       <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-6">
-        <button
-          onClick={() => goTo("hero")}
-          className="font-display text-sm font-semibold tracking-tight"
-        >
+        <Link href="/" className="font-display text-sm font-semibold tracking-tight">
           <span className="text-primary">&lt;</span>
           {profile.initials}
           <span className="text-primary">/&gt;</span>
-        </button>
+        </Link>
 
         <nav className="hidden items-center gap-1 lg:flex">
-          {navSections.map((s) => (
-            <button
-              key={s.id}
-              onClick={() => goTo(s.id)}
-              className={cn(
-                "relative rounded-full px-3.5 py-1.5 text-sm text-muted-foreground transition-colors hover:text-foreground",
-                active === s.id && "text-foreground"
-              )}
-            >
-              {active === s.id && (
-                <span className="absolute inset-0 rounded-full bg-surface" />
-              )}
-              <span className="relative">{s.label}</span>
-            </button>
-          ))}
+          {navSections.map((s) => {
+            const isActive = pathname === s.href;
+            return (
+              <Link
+                key={s.id}
+                href={s.href}
+                className={cn(
+                  "relative rounded-full px-3.5 py-1.5 text-sm text-muted-foreground transition-colors hover:text-foreground",
+                  isActive && "text-foreground"
+                )}
+              >
+                {isActive && (
+                  <span className="absolute inset-0 rounded-full bg-surface" />
+                )}
+                <span className="relative flex items-center gap-1.5">
+                  {s.label}
+                  {visited.has(s.id) && (
+                    <span
+                      className="size-1 rounded-full bg-primary"
+                      aria-hidden
+                    />
+                  )}
+                </span>
+              </Link>
+            );
+          })}
         </nav>
 
         <div className="flex items-center gap-3">
-          <CommandPalette />
-          <Button
-            size="sm"
-            className="hidden sm:inline-flex"
-            onClick={() => goTo("contact")}
+          <div
+            className="hidden items-center gap-1.5 font-mono text-[11px] text-muted-foreground md:flex"
+            title="Sections explored"
           >
-            Contact
+            <span className="text-primary">{visited.size}</span>/{total}{" "}
+            explored
+          </div>
+          <CommandPalette />
+          <Button size="sm" className="hidden sm:inline-flex" asChild>
+            <Link href="/contact">Contact</Link>
           </Button>
           <Sheet open={sheetOpen} onOpenChange={setSheetOpen}>
             <SheetTrigger asChild>
@@ -108,16 +102,20 @@ export function Navbar() {
               </SheetHeader>
               <nav className="flex flex-col gap-1 px-4">
                 {navSections.map((s) => (
-                  <button
+                  <Link
                     key={s.id}
-                    onClick={() => goTo(s.id)}
+                    href={s.href}
+                    onClick={() => setSheetOpen(false)}
                     className={cn(
-                      "rounded-lg px-3 py-2.5 text-left text-sm text-muted-foreground transition-colors hover:bg-surface hover:text-foreground",
-                      active === s.id && "bg-surface text-foreground"
+                      "flex items-center justify-between rounded-lg px-3 py-2.5 text-left text-sm text-muted-foreground transition-colors hover:bg-surface hover:text-foreground",
+                      pathname === s.href && "bg-surface text-foreground"
                     )}
                   >
                     {s.label}
-                  </button>
+                    {visited.has(s.id) && (
+                      <span className="size-1.5 rounded-full bg-primary" />
+                    )}
+                  </Link>
                 ))}
               </nav>
             </SheetContent>

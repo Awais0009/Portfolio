@@ -2,6 +2,13 @@ import type { Metadata } from "next";
 import { Inter, Space_Grotesk, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { TooltipProvider } from "@/components/ui/tooltip";
+import { Navbar } from "@/components/layout/navbar";
+import { Footer } from "@/components/layout/footer";
+import { CursorSpotlight } from "@/components/shared/cursor-spotlight";
+import { KonamiEgg } from "@/components/shared/konami-egg";
+import { AchievementsProvider } from "@/components/shared/achievements-provider";
+import { ExplorationProvider } from "@/components/shared/exploration-provider";
+import { PageTransition } from "@/components/shared/page-transition";
 
 const inter = Inter({
   variable: "--font-body",
@@ -41,7 +48,19 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       className={`dark ${inter.variable} ${spaceGrotesk.variable} ${geistMono.variable} h-full antialiased scroll-smooth`}
     >
       <body className="min-h-full flex flex-col bg-background text-foreground">
-        <TooltipProvider>{children}</TooltipProvider>
+        <TooltipProvider>
+          <AchievementsProvider>
+            <ExplorationProvider>
+              <CursorSpotlight />
+              <KonamiEgg />
+              <Navbar />
+              <main className="flex-1 pt-16">
+                <PageTransition>{children}</PageTransition>
+              </main>
+              <Footer />
+            </ExplorationProvider>
+          </AchievementsProvider>
+        </TooltipProvider>
       </body>
     </html>
   );

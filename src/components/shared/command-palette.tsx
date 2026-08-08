@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import {
   CommandDialog,
   CommandEmpty,
@@ -13,17 +14,17 @@ import {
 } from "@/components/ui/command";
 import { navSections } from "@/data/navigation";
 import { profile } from "@/data/profile";
-import {
-  ArrowRight,
-  Github,
-  Linkedin,
-  Mail,
-  Moon,
-  Terminal,
-} from "lucide-react";
+import { ArrowRight, Home, Mail, Sparkles, Terminal } from "lucide-react";
+import { GithubIcon, LinkedinIcon } from "@/components/shared/icons";
+import { useAchievements } from "@/components/shared/achievements-provider";
+
+const SECRET_PHRASE = "sudo hire me";
 
 export function CommandPalette() {
   const [open, setOpen] = useState(false);
+  const [value, setValue] = useState("");
+  const router = useRouter();
+  const { unlock } = useAchievements();
 
   useEffect(() => {
     function onKeyDown(e: KeyboardEvent) {
@@ -37,10 +38,20 @@ export function CommandPalette() {
     return () => document.removeEventListener("keydown", onKeyDown);
   }, []);
 
-  function goTo(id: string) {
+  function go(href: string) {
     setOpen(false);
-    document.getElementById(id)?.scrollIntoView({ behavior: "smooth" });
+    setValue("");
+    router.push(href);
   }
+
+  function runSecret() {
+    setOpen(false);
+    setValue("");
+    unlock("Permission granted", "sudo access confirmed — redirecting to /contact");
+    router.push("/contact");
+  }
+
+  const isSecret = value.trim().toLowerCase() === SECRET_PHRASE;
 
   return (
     <>
@@ -60,46 +71,67 @@ export function CommandPalette() {
         title="Command Palette"
         description="Jump to a section or reach out"
       >
-        <CommandInput placeholder="Type a section, or search for a way to reach me…" />
+        <CommandInput
+          value={value}
+          onValueChange={setValue}
+          placeholder="Type a section, a command, or try something…"
+        />
         <CommandList>
-          <CommandEmpty>No results found.</CommandEmpty>
-          <CommandGroup heading="Navigate">
-            {navSections.map((s) => (
-              <CommandItem key={s.id} onSelect={() => goTo(s.id)}>
-                <ArrowRight />
-                <span>{s.label}</span>
+          {isSecret ? (
+            <CommandGroup heading="Whoa">
+              <CommandItem onSelect={runSecret} value={SECRET_PHRASE}>
+                <Sparkles />
+                <span>Run: {SECRET_PHRASE}</span>
               </CommandItem>
-            ))}
-          </CommandGroup>
-          <CommandSeparator />
-          <CommandGroup heading="Connect">
-            <CommandItem
-              onSelect={() => window.open(profile.github, "_blank")}
-            >
-              <Github />
-              <span>Open GitHub</span>
-            </CommandItem>
-            <CommandItem
-              onSelect={() => (window.location.href = `mailto:${profile.email}`)}
-            >
-              <Mail />
-              <span>Email me</span>
-              <CommandShortcut>{profile.email}</CommandShortcut>
-            </CommandItem>
-            <CommandItem
-              onSelect={() => window.open(profile.linkedin, "_blank")}
-            >
-              <Linkedin />
-              <span>Open LinkedIn</span>
-            </CommandItem>
-          </CommandGroup>
-          <CommandSeparator />
-          <CommandGroup heading="Secrets">
-            <CommandItem disabled>
-              <Moon />
-              <span>Try the Konami code…</span>
-            </CommandItem>
-          </CommandGroup>
+            </CommandGroup>
+          ) : (
+            <>
+              <CommandEmpty>No results found.</CommandEmpty>
+              <CommandGroup heading="Navigate">
+                <CommandItem onSelect={() => go("/")}>
+                  <Home />
+                  <span>Home</span>
+                </CommandItem>
+                {navSections.map((s) => (
+                  <CommandItem key={s.id} onSelect={() => go(s.href)}>
+                    <ArrowRight />
+                    <span>{s.label}</span>
+                  </CommandItem>
+                ))}
+              </CommandGroup>
+              <CommandSeparator />
+              <CommandGroup heading="Connect">
+                <CommandItem
+                  onSelect={() => window.open(profile.github, "_blank")}
+                >
+                  <GithubIcon />
+                  <span>Open GitHub</span>
+                </CommandItem>
+                <CommandItem
+                  onSelect={() =>
+                    (window.location.href = `mailto:${profile.email}`)
+                  }
+                >
+                  <Mail />
+                  <span>Email me</span>
+                  <CommandShortcut>{profile.email}</CommandShortcut>
+                </CommandItem>
+                <CommandItem
+                  onSelect={() => window.open(profile.linkedin, "_blank")}
+                >
+                  <LinkedinIcon />
+                  <span>Open LinkedIn</span>
+                </CommandItem>
+              </CommandGroup>
+              <CommandSeparator />
+              <CommandGroup heading="Secrets">
+                <CommandItem disabled>
+                  <Sparkles />
+                  <span>Try typing &quot;{SECRET_PHRASE}&quot;… or the Konami code</span>
+                </CommandItem>
+              </CommandGroup>
+            </>
+          )}
         </CommandList>
       </CommandDialog>
     </>

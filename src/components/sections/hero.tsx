@@ -1,8 +1,10 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
 import { motion } from "framer-motion";
-import { ArrowDown, ArrowUpRight, Github, Mail } from "lucide-react";
+import { ArrowDown, ArrowUpRight, Mail } from "lucide-react";
+import { GithubIcon } from "@/components/shared/icons";
 import { Button } from "@/components/ui/button";
 import { profile } from "@/data/profile";
 
@@ -25,8 +27,10 @@ function useTypewriter(words: string[], speed = 55, pause = 1400) {
     if (!deleting && text === current) {
       timeout = setTimeout(() => setDeleting(true), pause);
     } else if (deleting && text === "") {
-      setDeleting(false);
-      setWordIndex((i) => i + 1);
+      timeout = setTimeout(() => {
+        setDeleting(false);
+        setWordIndex((i) => i + 1);
+      }, speed);
     } else {
       timeout = setTimeout(
         () => {
@@ -43,17 +47,13 @@ function useTypewriter(words: string[], speed = 55, pause = 1400) {
   return text;
 }
 
-function scrollTo(id: string) {
-  document.getElementById(id)?.scrollIntoView({ behavior: "smooth" });
-}
-
 export function Hero() {
   const typed = useTypewriter(ROLES);
 
   return (
     <section
       id="hero"
-      className="relative flex min-h-screen items-center overflow-hidden pt-16"
+      className="relative flex min-h-[calc(100vh-4rem)] items-center overflow-hidden"
     >
       <div className="bg-blueprint-grid absolute inset-0 [mask-image:radial-gradient(ellipse_60%_60%_at_50%_35%,black,transparent)]" />
       <div
@@ -112,17 +112,17 @@ export function Hero() {
             transition={{ duration: 0.6, delay: 0.4 }}
             className="mt-9 flex flex-wrap items-center gap-3"
           >
-            <Button size="lg" onClick={() => scrollTo("projects")} className="group">
-              View Projects
-              <ArrowUpRight className="size-4 transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
+            <Button size="lg" asChild className="group">
+              <Link href="/projects">
+                View Projects
+                <ArrowUpRight className="size-4 transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
+              </Link>
             </Button>
-            <Button
-              size="lg"
-              variant="outline"
-              onClick={() => scrollTo("contact")}
-            >
-              <Mail className="size-4" />
-              Contact Me
+            <Button size="lg" variant="outline" asChild>
+              <Link href="/contact">
+                <Mail className="size-4" />
+                Contact Me
+              </Link>
             </Button>
             <a
               href={profile.github}
@@ -131,7 +131,7 @@ export function Hero() {
               className="inline-flex size-11 items-center justify-center rounded-md border border-border/60 text-muted-foreground transition-colors hover:border-primary/40 hover:text-primary"
               aria-label="GitHub"
             >
-              <Github className="size-5" />
+              <GithubIcon className="size-5" />
             </a>
           </motion.div>
         </div>
@@ -146,13 +146,13 @@ export function Hero() {
         </motion.div>
       </div>
 
-      <button
-        onClick={() => scrollTo("about")}
+      <Link
+        href="/about"
         className="absolute bottom-8 left-1/2 -translate-x-1/2 text-muted-foreground transition-colors hover:text-primary"
-        aria-label="Scroll to About"
+        aria-label="Go to About"
       >
         <ArrowDown className="size-5 animate-bounce" />
-      </button>
+      </Link>
     </section>
   );
 }
